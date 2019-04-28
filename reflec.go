@@ -74,7 +74,7 @@ func typeFields(t reflect.Type) []StructField {
 			continue
 		}
 
-		partIndex, subIndex := parseTwoInts(tag)
+		partIndex, subIndex := parseTwoInts(tag, -1)
 		fields[fi] = StructField{
 			PartIndex: partIndex,
 			SubIndex:  subIndex,
@@ -88,14 +88,17 @@ func typeFields(t reflect.Type) []StructField {
 	return fields
 }
 
-func parseTwoInts(tag string) (int, int) {
+func parseTwoInts(tag string, defaultValue int) (int, int) {
 	s0, s1 := Split2(tag, ".")
-	return parseInt(s0), parseInt(s1)
+	return parseInt(s0, defaultValue), parseInt(s1, defaultValue)
 }
 
-func parseInt(s string) int {
-	i, _ := strconv.Atoi(s)
-	return i
+func parseInt(s string, defaultValue int) int {
+	i, err := strconv.Atoi(s)
+	if err == nil {
+		return i
+	}
+	return defaultValue
 }
 
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
@@ -106,11 +109,16 @@ func fillField(lineSplitter PartSplitter, partSplitter SubSplitter, sf StructFie
 	if sf.PartIndex >= 0 && sf.PartIndex < len(parts) {
 		part = parts[sf.PartIndex]
 	}
+	if part == "-" {
+		part = ""
+	}
 
 	partSplitter.Load(part, ",")
 	subs := partSplitter.Subs()
 	sub := ""
-	if sf.SubIndex >= 0 && sf.SubIndex < len(subs) {
+	if sf.SubIndex < 0 {
+		sub = part
+	} else if sf.SubIndex < len(subs) {
 		sub = subs[sf.SubIndex]
 	}
 

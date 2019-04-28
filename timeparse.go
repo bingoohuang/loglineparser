@@ -13,7 +13,7 @@ func ParseTime(s interface{}) time.Time {
 	switch vt := s.(type) {
 	case string:
 		if reg.MatchString(vt) {
-			sec, millis := parseTwoInts(vt)
+			sec, millis := parseTwoInts(vt, 0)
 			return time.Unix(int64(sec), int64(millis*1000))
 		}
 	}
