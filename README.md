@@ -1,4 +1,4 @@
-# logfmtparser
+# loglineparser
 log parser to golang struct
 
 ## 日志格式定义
@@ -95,3 +95,7 @@ func TestCustomDecode(t *testing.T) {
 ```
 
 
+## 运行测试
+
+1. 运行测试用例 `go test`
+1. 运行基准用例 `go test -bench=. -benchtime=15s`

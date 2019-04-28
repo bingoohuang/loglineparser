@@ -10,9 +10,7 @@ func BenchmarkMakeBracketPartSplitter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		parser := createParser()
-		for {
-			parser.ParseParts()
-		}
+		parser.ParseParts()
 	}
 }
 
