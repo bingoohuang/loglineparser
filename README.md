@@ -56,10 +56,6 @@ type IP struct {
 	ip net.IP
 }
 
-func MakeIP(v string) IP {
-	return IP{ip: net.ParseIP(v)}
-}
-
 func (i *IP) Unmarshal(v string) error {
 	i.ip = net.ParseIP(v)
 	if i.ip == nil {
@@ -92,7 +88,7 @@ func TestCustomDecode(t *testing.T) {
 	a.Equal(LogLine{
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
-		UserClientIP: MakeIP("192.168.106.8"),
+		UserClientIP: IP{ip: net.ParseIP("192.168.106.8")},
 	}, v)
 }
 
