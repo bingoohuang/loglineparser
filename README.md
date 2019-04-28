@@ -97,21 +97,21 @@ func TestCustomDecode(t *testing.T) {
 
 ## 运行测试
 
-1. 运行测试用例 `go test`
+1. 运行测试用例 `go test ./...`
 1. 运行基准用例 `go test -bench=.`
 
 ```bash
-➜  loglineparser git:(master) ✗ go test -bench=.
+$ go test ./...
+ok  	github.com/bingoohuang/loglineparser	(cached)
+
+$ go test -bench=.
 goos: darwin
 goarch: amd64
 pkg: github.com/bingoohuang/loglineparser
-BenchmarkParseGatewayMonV2-12          	   10000	    103555 ns/op
-BenchmarkMakeBracketPartSplitter-12    	   30000	     52735 ns/op
+BenchmarkParseGatewayMonV2-12          	   10000	    102426 ns/op
+BenchmarkMakeBracketPartSplitter-12    	   30000	     51495 ns/op
 PASS
-ok  	github.com/bingoohuang/loglineparser	3.184s
-➜  loglineparser git:(master) ✗ go test
-PASS
-ok  	github.com/bingoohuang/loglineparser	0.015s
+ok  	github.com/bingoohuang/loglineparser	3.138s
 ```
 
-> [103555 Nanoseconds = 0.103555 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#103555)
+> [102426 Nanoseconds = 0.102426 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#102426)

@@ -13,14 +13,13 @@ import (
 
 func ParseLogLine(line string, result interface{}) error {
 	partSplitter := MakeBracketPartSplitter()
-	partSplitter.LoadLine(line)
+	subSplitter := MakeSubSplitter(",", "-")
 
-	subSplitter := MakeSubSplitter()
-
-	return ParseLog(result, partSplitter, subSplitter)
+	parts := partSplitter.Parse(line)
+	return ParseLog(parts, result, subSplitter)
 }
 
-func ParseLog(result interface{}, lineSplitter PartSplitter, partSplitter SubSplitter) error {
+func ParseLog(parts []string, result interface{}, subSplitter PartSplitter) error {
 	structTypePtr := reflect.TypeOf(result)
 	if structTypePtr.Kind() != reflect.Ptr {
 		return fmt.Errorf("non struct ptr %v", structTypePtr)
@@ -32,7 +31,7 @@ func ParseLog(result interface{}, lineSplitter PartSplitter, partSplitter SubSpl
 
 	structFields := cachedStructFields(v.Type())
 	for i, sf := range structFields {
-		err := fillField(lineSplitter, partSplitter, sf, v.Field(i))
+		err := fillField(parts, subSplitter, sf, v.Field(i))
 		if err != nil {
 			return err
 		}
@@ -103,8 +102,7 @@ func parseInt(s string, defaultValue int) int {
 
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
-func fillField(lineSplitter PartSplitter, partSplitter SubSplitter, sf StructField, f reflect.Value) error {
-	parts := lineSplitter.ParseParts()
+func fillField(parts []string, subSplitter PartSplitter, sf StructField, f reflect.Value) error {
 	part := ""
 	if sf.PartIndex >= 0 && sf.PartIndex < len(parts) {
 		part = parts[sf.PartIndex]
@@ -113,8 +111,11 @@ func fillField(lineSplitter PartSplitter, partSplitter SubSplitter, sf StructFie
 		part = ""
 	}
 
-	partSplitter.Load(part, ",")
-	subs := partSplitter.Subs()
+	if part == "" {
+		return nil
+	}
+
+	subs := subSplitter.Parse(part)
 	sub := ""
 	if sf.SubIndex < 0 {
 		sub = part
@@ -128,7 +129,7 @@ func fillField(lineSplitter PartSplitter, partSplitter SubSplitter, sf StructFie
 
 	if sf.Kind == reflect.Struct && sf.Anonymous {
 		fv := reflect.New(f.Type()).Interface()
-		err := ParseLog(fv, lineSplitter, partSplitter)
+		err := ParseLog(parts, fv, subSplitter)
 		if err != nil {
 			return err
 		}
