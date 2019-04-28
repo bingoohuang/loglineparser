@@ -98,4 +98,4 @@ func TestCustomDecode(t *testing.T) {
 ## 运行测试
 
 1. 运行测试用例 `go test`
-1. 运行基准用例 `go test -bench=. -benchtime=15s`
+1. 运行基准用例 `go test -bench=.`
