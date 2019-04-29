@@ -1,6 +1,7 @@
 package loglineparser
 
 import (
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -81,4 +82,13 @@ func Split2(s, sep string) (s0, s1 string) {
 	}
 
 	return
+}
+
+// ParseInt parse s as int or return defaultValue
+func ParseInt(s string, defaultValue int) int {
+	i, err := strconv.Atoi(s)
+	if err == nil {
+		return i
+	}
+	return defaultValue
 }
