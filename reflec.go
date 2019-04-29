@@ -12,7 +12,7 @@ type StructFieldsCache struct {
 }
 
 // CachedStructFields caches fields of struct type
-func (s *StructFieldsCache) CachedStructFields(t reflect.Type, fn func(f reflect.StructField) interface{}) interface{} {
+func (s *StructFieldsCache) CachedStructFields(t reflect.Type, fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
 	if f, ok := s.fieldsCache.Load(t); ok {
 		return f
 	}
@@ -20,13 +20,13 @@ func (s *StructFieldsCache) CachedStructFields(t reflect.Type, fn func(f reflect
 	return f
 }
 
-func typeFields(t reflect.Type, fn func(f reflect.StructField) interface{}) interface{} {
+func typeFields(t reflect.Type, fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
 	ff := t.NumField()
 	var fields reflect.Value
 
 	for fi := 0; fi < ff; fi++ {
 		f := t.Field(fi)
-		field := fn(f)
+		field := fn(fi, f)
 		if field == nil {
 			continue
 		}

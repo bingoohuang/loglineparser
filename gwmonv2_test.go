@@ -104,3 +104,31 @@ func TestCustomDecode(t *testing.T) {
 		Xy:           "x,y",
 	}, v)
 }
+
+type LogLineUser struct {
+	UserTime     time.Time `llp:"3.0" json:"reqTime"`
+	UserClientIP IP        `llp:"3.1" json:"userClientIP"`
+}
+
+type LogLine2 struct {
+	LogType string `llp:"2" json:"logType"` // GatewayMonV2
+
+	LogLineUser
+
+	Xy string `llp:"4" json:"xy"`
+}
+
+func TestCustomDecode2(t *testing.T) {
+	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
+	v := LogLine2{}
+	err := loglineparser.ParseLogLine(line, &v)
+
+	a := assert.New(t)
+	a.Nil(err)
+	a.Equal(LogLine2{
+		LogType: "GatewayMonV2",
+		LogLineUser: LogLineUser{UserTime: loglineparser.ParseTime("1539866805.135"),
+			UserClientIP: IP{ip: net.ParseIP("192.168.106.8")}},
+		Xy: "x,y",
+	}, v)
+}

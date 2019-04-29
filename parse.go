@@ -21,25 +21,26 @@ func ParseLog(parts []string, result interface{}, subSplitter PartSplitter) erro
 		return err
 	}
 
-	structFields := fieldsCache.CachedStructFields(v.Type(), func(f reflect.StructField) interface{} {
+	structFields := fieldsCache.CachedStructFields(v.Type(), func(fieldIndex int, f reflect.StructField) interface{} {
 		tag, _ := f.Tag.Lookup("llp")
-		if tag == "" || tag == "-" {
+		if !f.Anonymous && (tag == "" || tag == "-") {
 			return nil
 		}
 
 		partIndex, subIndex := parseTwoInts(tag, -1)
 		return structField{
-			PartIndex: partIndex,
-			SubIndex:  subIndex,
-			Kind:      f.Type.Kind(),
-			Type:      f.Type,
-			PtrType:   reflect.PtrTo(f.Type),
-			Anonymous: f.Anonymous,
+			FieldIndex: fieldIndex,
+			PartIndex:  partIndex,
+			SubIndex:   subIndex,
+			Kind:       f.Type.Kind(),
+			Type:       f.Type,
+			PtrType:    reflect.PtrTo(f.Type),
+			Anonymous:  f.Anonymous,
 		}
 	}).([]structField)
 
-	for i, sf := range structFields {
-		err := fillField(parts, subSplitter, sf, v.Field(i))
+	for _, sf := range structFields {
+		err := fillField(parts, subSplitter, sf, v.Field(sf.FieldIndex))
 		if err != nil {
 			return err
 		}
@@ -50,12 +51,13 @@ func ParseLog(parts []string, result interface{}, subSplitter PartSplitter) erro
 
 // structField 表示一个struct的字段属性
 type structField struct {
-	PartIndex int
-	SubIndex  int
-	Kind      reflect.Kind
-	Type      reflect.Type
-	PtrType   reflect.Type
-	Anonymous bool
+	FieldIndex int
+	PartIndex  int
+	SubIndex   int
+	Kind       reflect.Kind
+	Type       reflect.Type
+	PtrType    reflect.Type
+	Anonymous  bool
 }
 
 func parseTwoInts(tag string, defaultValue int) (int, int) {
@@ -66,6 +68,17 @@ func parseTwoInts(tag string, defaultValue int) (int, int) {
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
 func fillField(parts []string, subSplitter PartSplitter, sf structField, f reflect.Value) error {
+	if sf.Kind == reflect.Struct && sf.Anonymous {
+		fv := reflect.New(f.Type()).Interface()
+		err := ParseLog(parts, fv, subSplitter)
+		if err != nil {
+			return err
+		}
+
+		f.Set(reflect.ValueOf(fv).Elem())
+		return nil
+	}
+
 	part := parsePart(sf, parts)
 	if part == "" {
 		return nil
@@ -88,10 +101,7 @@ func fillField(parts []string, subSplitter PartSplitter, sf structField, f refle
 		v := ParseTime(sub)
 		fv = &v
 	default:
-		if sf.Kind == reflect.Struct && sf.Anonymous {
-			fv = reflect.New(f.Type()).Interface()
-			err = ParseLog(parts, fv, subSplitter)
-		} else if sf.Kind == reflect.Map {
+		if sf.Kind == reflect.Map {
 			fv = reflect.New(f.Type()).Interface()
 			err = json.Unmarshal([]byte(sub), fv)
 		} else if sf.PtrType.Implements(unmarsherType) {
