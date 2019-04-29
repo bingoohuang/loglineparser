@@ -24,5 +24,5 @@ func TestIsBlank(t *testing.T) {
 	elem := pv.Type().Elem()
 	ev := reflect.Zero(elem).Interface().(Papa)
 	ev.Name = "bingoo"
-	fmt.Println(ev)
+	//fmt.Println(ev)
 }

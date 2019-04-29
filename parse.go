@@ -8,8 +8,8 @@ import (
 )
 
 func ParseLogLine(line string, result interface{}) error {
-	parts := MakeBracketPartSplitter().Parse(line)
-	subSplitter := MakeSubSplitter(",", "-")
+	parts := NewBracketPartSplitter().Parse(line)
+	subSplitter := NewSubSplitter(",", "-")
 	return ParseLog(parts, result, subSplitter)
 }
 

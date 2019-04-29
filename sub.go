@@ -5,7 +5,7 @@ type logPartSplitter struct {
 	emptyPlaceholder string
 }
 
-func MakeSubSplitter(sep, emptyPlaceholder string) PartSplitter {
+func NewSubSplitter(sep, emptyPlaceholder string) PartSplitter {
 	return &logPartSplitter{sep: sep, emptyPlaceholder: emptyPlaceholder}
 }
 

@@ -14,7 +14,7 @@ type PartSplitter interface {
 type bracketPartSplitter struct {
 }
 
-func MakeBracketPartSplitter() PartSplitter {
+func NewBracketPartSplitter() PartSplitter {
 	return &bracketPartSplitter{}
 }
 
