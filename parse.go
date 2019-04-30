@@ -3,19 +3,39 @@ package loglineparser
 import (
 	"encoding/json"
 	"errors"
+	"github.com/modern-go/reflect2"
 	"reflect"
 	"time"
 )
 
-func ParseLogLine(line string, result interface{}) error {
-	parts := NewBracketPartSplitter().Parse(line)
-	subSplitter := NewSubSplitter(",", "-")
-	return ParseLog(parts, result, subSplitter)
+type LogLineParser struct {
+	FieldsCache  StructFieldsCache
+	StructType   reflect2.Type
+	PartSplitter PartSplitter
+	SubSplitter  PartSplitter
 }
 
-var fieldsCache StructFieldsCache
+func NewLogLineParser(structTypeName string) *LogLineParser {
+	return &LogLineParser{
+		StructType:   reflect2.TypeByName(structTypeName),
+		PartSplitter: NewBracketPartSplitter(),
+		SubSplitter:  NewSubSplitter(",", "-"),
+	}
+}
 
-func ParseLog(parts []string, result interface{}, subSplitter PartSplitter) error {
+func (l *LogLineParser) Parse(line string) (interface{}, error) {
+	parts := l.PartSplitter.Parse(line)
+	subSplitter := NewSubSplitter(",", "-")
+	p := l.StructType.New()
+	err := parse(l.FieldsCache, parts, p, subSplitter)
+	if err != nil {
+		return nil, err
+	}
+
+	return reflect.ValueOf(p).Elem().Interface(), nil
+}
+
+func parse(fieldsCache StructFieldsCache, parts []string, result interface{}, subSplitter PartSplitter) error {
 	v, err := CheckStructPtr(result)
 	if err != nil {
 		return err
@@ -40,7 +60,7 @@ func ParseLog(parts []string, result interface{}, subSplitter PartSplitter) erro
 	}).([]structField)
 
 	for _, sf := range structFields {
-		err := fillField(parts, subSplitter, sf, v.Field(sf.FieldIndex))
+		err := fillField(fieldsCache, parts, subSplitter, sf, v.Field(sf.FieldIndex))
 		if err != nil {
 			return err
 		}
@@ -67,10 +87,10 @@ func parseTwoInts(tag string, defaultValue int) (int, int) {
 
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
-func fillField(parts []string, subSplitter PartSplitter, sf structField, f reflect.Value) error {
+func fillField(fieldsCache StructFieldsCache, parts []string, subSplitter PartSplitter, sf structField, f reflect.Value) error {
 	if sf.Kind == reflect.Struct && sf.Anonymous {
 		fv := reflect.New(f.Type()).Interface()
-		err := ParseLog(parts, fv, subSplitter)
+		err := parse(fieldsCache, parts, fv, subSplitter)
 		if err != nil {
 			return err
 		}

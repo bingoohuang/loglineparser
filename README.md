@@ -15,6 +15,13 @@ log parser to golang struct
 可以定义以下go语言的结构体，来映射这些提取部分，或者提取子字段(subs):
 
 ```go
+package yourawesomepackage
+
+import (
+	"github.com/bingoohuang/loglineparser"
+	"time"
+)
+
 type LogLine struct {
 	LogLevel       string `llp:"0" json:"logLevel"` // notice
 	GatewayStatus string `llp:"2" json:"gatewayFlag"` // GatewayMonV2
@@ -32,12 +39,12 @@ type LogLine struct {
 }
 
 
+var LogLineParser = loglineparser.NewLogLineParser("yourawesomepackage.LogLine")
+
 // ParseLogLine 解析一行日志
 func ParseLogLine(line string) (LogLine, error) {
-	v := LogLine{}
-	err := logfmtparser.ParseLogLine(line, &v)
-
-	return v, err
+    v, err := LogLineParser.Parse(line)
+	return v.(LogLine), err
 }
 
 
@@ -52,45 +59,64 @@ func ParseLogLine(line string) (LogLine, error) {
 如果需要实现自定义解码，可以参考以下示例：
 
 ```go
-type IP struct {
-	ip net.IP
+package yourawesomepackage
+
+import (
+	"encoding/json"
+	"errors"
+	"github.com/bingoohuang/loglineparser"
+	"github.com/stretchr/testify/assert"
+	"net"
+	"testing"
+	"time"
+)
+
+type MyIP struct {
+	net.IP
 }
 
-func (i *IP) Unmarshal(v string) error {
-	i.ip = net.ParseIP(v)
-	if i.ip == nil {
+func (i *MyIP) Unmarshal(v string) error {
+	ip := net.ParseIP(v)
+	if ip == nil {
 		return errors.New("bad format ip " + v)
 	}
+	i.IP = ip
 
 	return nil
 }
 
-func (i *IP) MarshalJSON() ([]byte, error) {
-	return i.MarshalJSON()
+func (i MyIP) MarshalJSON() ([]byte, error) {
+	s, err := i.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(string(s))
 }
-
 
 type LogLine struct {
 	LogType string `llp:"2" json:"logType"` // GatewayMonV2
 
 	UserTime     time.Time `llp:"3.0" json:"reqTime"`
-	UserClientIP IP        `llp:"3.1" json:"userClientIP"`
+	UserClientIP MyIP       `llp:"3.1" json:"userClientIP"`
 }
 
 
+var LogLineParser = loglineparser.NewLogLineParser("yourawesomepackage.LogLine")
+
 func TestCustomDecode(t *testing.T) {
-	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] xxxxx`
-	v := LogLine{}
-	err := loglineparser.ParseLogLine(line, &v)
+	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
+
+	v, err := LogLineParser.Parse(line)
 
 	a := assert.New(t)
 	a.Nil(err)
 	a.Equal(LogLine{
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
-		UserClientIP: IP{ip: net.ParseIP("192.168.106.8")},
+		UserClientIP: MyIP{net.ParseIP("192.168.106.8")},
 	}, v)
 }
+
 
 ```
 

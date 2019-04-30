@@ -4,14 +4,6 @@ import (
 	"time"
 )
 
-// ParseGatewayMonV2 解析GatewayMonV2日志
-func ParseGatewayMonV2(line string) (GatewayMonV2, error) {
-	v := GatewayMonV2{}
-	err := ParseLogLine(line, &v)
-
-	return v, err
-}
-
 /*
  -- http://192.168.131.32:9000/develop/FOOTSTONE/GateWay/Code/api-gateway-ng/blob/master/lua/web/gateway.lua
  ngx.log(ngx.NOTICE, string.format("[%s] [%s], [%s], [%s, %s, %s, %s, %s], [%s, %s, %s, %s], [%s, %s, %s], [%s, %s, %s, %s, %s, %s, %s, %s], [%s], [%s, %s, %s, %s], [%s], [%s], [%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s], [-End-]",
