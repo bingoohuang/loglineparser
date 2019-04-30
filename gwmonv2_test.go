@@ -88,6 +88,7 @@ func (i *MyIP) Unmarshal(v string) error {
 	return nil
 }
 
+// 实现参考自: https://github.com/projectcalico/libcalico-go/blob/master/lib/net/ip.go
 func (i MyIP) MarshalJSON() ([]byte, error) {
 	s, err := i.MarshalText()
 	if err != nil {
