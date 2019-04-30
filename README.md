@@ -23,7 +23,7 @@ import (
 )
 
 type LogLine struct {
-	LogLevel       string `llp:"0" json:"logLevel"` // notice
+	LogLevel      string `llp:"0" json:"logLevel"`    // notice
 	GatewayStatus string `llp:"2" json:"gatewayFlag"` // GatewayMonV2
 
 	RespStatus            string    `llp:"4.0" json:"respStatus"`
@@ -43,7 +43,7 @@ var LogLineParser = loglineparser.NewLogLineParser("yourawesomepackage.LogLine")
 
 // ParseLogLine 解析一行日志
 func ParseLogLine(line string) (LogLine, error) {
-    v, err := LogLineParser.Parse(line)
+	v, err := LogLineParser.Parse(line)
 	return v.(LogLine), err
 }
 

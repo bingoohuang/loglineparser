@@ -25,9 +25,8 @@ func NewLogLineParser(structTypeName string) *LogLineParser {
 
 func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	parts := l.PartSplitter.Parse(line)
-	subSplitter := NewSubSplitter(",", "-")
 	p := l.StructType.New()
-	err := parse(l.FieldsCache, parts, p, subSplitter)
+	err := l.parse(parts, p)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +34,13 @@ func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	return reflect.ValueOf(p).Elem().Interface(), nil
 }
 
-func parse(fieldsCache StructFieldsCache, parts []string, result interface{}, subSplitter PartSplitter) error {
+func (l *LogLineParser) parse(parts []string, result interface{}) error {
 	v, err := CheckStructPtr(result)
 	if err != nil {
 		return err
 	}
 
-	structFields := fieldsCache.CachedStructFields(v.Type(), func(fieldIndex int, f reflect.StructField) interface{} {
+	structFields := l.FieldsCache.CachedStructFields(v.Type(), func(fieldIndex int, f reflect.StructField) interface{} {
 		tag, _ := f.Tag.Lookup("llp")
 		if !f.Anonymous && (tag == "" || tag == "-") {
 			return nil
@@ -60,7 +59,7 @@ func parse(fieldsCache StructFieldsCache, parts []string, result interface{}, su
 	}).([]structField)
 
 	for _, sf := range structFields {
-		err := fillField(fieldsCache, parts, subSplitter, sf, v.Field(sf.FieldIndex))
+		err := l.fillField(parts, sf, v.Field(sf.FieldIndex))
 		if err != nil {
 			return err
 		}
@@ -87,10 +86,10 @@ func parseTwoInts(tag string, defaultValue int) (int, int) {
 
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
-func fillField(fieldsCache StructFieldsCache, parts []string, subSplitter PartSplitter, sf structField, f reflect.Value) error {
+func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Value) error {
 	if sf.Kind == reflect.Struct && sf.Anonymous {
 		fv := reflect.New(f.Type()).Interface()
-		err := parse(fieldsCache, parts, fv, subSplitter)
+		err := l.parse(parts, fv)
 		if err != nil {
 			return err
 		}
@@ -104,7 +103,7 @@ func fillField(fieldsCache StructFieldsCache, parts []string, subSplitter PartSp
 		return nil
 	}
 
-	sub := parseSub(subSplitter, part, sf)
+	sub := l.parseSub(part, sf)
 	if sub == "" {
 		return nil
 	}
@@ -141,12 +140,12 @@ func fillField(fieldsCache StructFieldsCache, parts []string, subSplitter PartSp
 	return errors.New(sf.Kind.String() + " is not supported")
 }
 
-func parseSub(subSplitter PartSplitter, part string, sf structField) string {
+func (l *LogLineParser) parseSub(part string, sf structField) string {
 	if sf.SubIndex < 0 {
 		return part
 	}
 
-	subs := subSplitter.Parse(part)
+	subs := l.SubSplitter.Parse(part)
 	if sf.SubIndex < len(subs) {
 		return subs[sf.SubIndex]
 	}
