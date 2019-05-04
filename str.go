@@ -51,8 +51,7 @@ func IsAlphanumeric(s string) bool {
 
 func SplitN(s, sep string, trimSpace, ignoreEmpty bool) []string {
 	parts := strings.SplitN(s, sep, -1)
-
-	result := make([]string, 0)
+	result := make([]string, 0, len(parts))
 
 	for _, p := range parts {
 		if trimSpace {
@@ -81,7 +80,7 @@ func Split2(s, sep string) (s0, s1 string) {
 		s1 = strings.TrimSpace(parts[1])
 	}
 
-	return
+	return s0, s1
 }
 
 // ParseInt parse s as int or return defaultValue

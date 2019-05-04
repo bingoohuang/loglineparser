@@ -34,29 +34,31 @@ func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	return reflect.ValueOf(p).Elem().Interface(), nil
 }
 
+func createStructField(fieldIndex int, f reflect.StructField) interface{} {
+	tag, _ := f.Tag.Lookup("llp")
+	if !f.Anonymous && (tag == "" || tag == "-") {
+		return nil
+	}
+
+	partIndex, subIndex := parseTwoInts(tag, -1)
+	return structField{
+		FieldIndex: fieldIndex,
+		PartIndex:  partIndex,
+		SubIndex:   subIndex,
+		Kind:       f.Type.Kind(),
+		Type:       f.Type,
+		PtrType:    reflect.PtrTo(f.Type),
+		Anonymous:  f.Anonymous,
+	}
+}
+
 func (l *LogLineParser) parse(parts []string, result interface{}) error {
 	v, err := CheckStructPtr(result)
 	if err != nil {
 		return err
 	}
 
-	structFields := l.FieldsCache.CachedStructFields(v.Type(), func(fieldIndex int, f reflect.StructField) interface{} {
-		tag, _ := f.Tag.Lookup("llp")
-		if !f.Anonymous && (tag == "" || tag == "-") {
-			return nil
-		}
-
-		partIndex, subIndex := parseTwoInts(tag, -1)
-		return structField{
-			FieldIndex: fieldIndex,
-			PartIndex:  partIndex,
-			SubIndex:   subIndex,
-			Kind:       f.Type.Kind(),
-			Type:       f.Type,
-			PtrType:    reflect.PtrTo(f.Type),
-			Anonymous:  f.Anonymous,
-		}
-	}).([]structField)
+	structFields := l.FieldsCache.CachedStructFields(v.Type(), createStructField).([]structField)
 
 	for _, sf := range structFields {
 		err := l.fillField(parts, sf, v.Field(sf.FieldIndex))
