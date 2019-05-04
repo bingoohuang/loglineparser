@@ -1,4 +1,5 @@
 # loglineparser
+
 log parser to golang struct
 
 ## 日志格式定义
@@ -12,7 +13,7 @@ log parser to golang struct
 
 然后在xx中，可能有多个子字段(subs)，比如[200, 0.023999929428101, 1539866805.135, 108]，这个以逗号分隔的，是子字段(subs)。
 
-可以定义以下go语言的结构体，来映射这些提取部分，或者提取子字段(subs):
+可以定义以下go语言的结构体，来映射这些提取部分(parts)，或者提取子字段(subs):
 
 ```go
 package yourawesomepackage
@@ -39,7 +40,7 @@ type LogLine struct {
 }
 
 
-var LogLineParser = loglineparser.NewLogLineParser("yourawesomepackage.LogLine")
+var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
 
 // ParseLogLine 解析一行日志
 func ParseLogLine(line string) (LogLine, error) {
@@ -101,7 +102,7 @@ type LogLine struct {
 }
 
 
-var LogLineParser = loglineparser.NewLogLineParser("yourawesomepackage.LogLine")
+var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
 
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
@@ -128,16 +129,17 @@ func TestCustomDecode(t *testing.T) {
 
 ```bash
 $ go test ./...
-ok  	github.com/bingoohuang/loglineparser	(cached)
+ok  	github.com/bingoohuang/loglineparser	0.013s
 
 $ go test -bench=.
+*loglineparser_test.Papa
 goos: darwin
 goarch: amd64
 pkg: github.com/bingoohuang/loglineparser
-BenchmarkParseGatewayMonV2-12          	   10000	    102426 ns/op
-BenchmarkMakeBracketPartSplitter-12    	   30000	     51495 ns/op
+BenchmarkParseGatewayMonV2-12          	   20000	     89578 ns/op
+BenchmarkMakeBracketPartSplitter-12    	   30000	     49549 ns/op
 PASS
-ok  	github.com/bingoohuang/loglineparser	3.138s
+ok  	github.com/bingoohuang/loglineparser	4.730s
 ```
 
-> [102426 Nanoseconds = 0.102426 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#102426)
+> [89578 Nanoseconds = 0.089578 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#89578)

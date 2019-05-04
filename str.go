@@ -74,10 +74,10 @@ func Split2(s, sep string) (s0, s1 string) {
 	l := len(parts)
 
 	if l > 0 {
-		s0 = strings.TrimSpace(parts[0])
+		s0 = parts[0]
 	}
 	if l > 1 {
-		s1 = strings.TrimSpace(parts[1])
+		s1 = parts[1]
 	}
 
 	return s0, s1
@@ -85,6 +85,10 @@ func Split2(s, sep string) (s0, s1 string) {
 
 // ParseInt parse s as int or return defaultValue
 func ParseInt(s string, defaultValue int) int {
+	if s == "" {
+		return defaultValue
+	}
+
 	i, err := strconv.Atoi(s)
 	if err == nil {
 		return i

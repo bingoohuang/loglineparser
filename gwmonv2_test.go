@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-var gatewayMonV2Parser = loglineparser.NewLogLineParser("loglineparser.GatewayMonV2")
+var gatewayMonV2Parser = loglineparser.NewLogLineParser((*loglineparser.GatewayMonV2)(nil))
+
+// or var gatewayMonV2Parser = loglineparser.NewLogLineParser("loglineparser.GatewayMonV2")
 
 // ParseGatewayMonV2 解析GatewayMonV2日志
 func ParseGatewayMonV2(line string) (loglineparser.GatewayMonV2, error) {
@@ -106,7 +108,7 @@ type LogLine struct {
 	Xy string `llp:"4" json:"xy"`
 }
 
-var LogLineParser = loglineparser.NewLogLineParser("loglineparser_test.LogLine")
+var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
 
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`

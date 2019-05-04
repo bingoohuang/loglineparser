@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/modern-go/reflect2"
+	"github.com/sirupsen/logrus"
 	"reflect"
 	"time"
 )
@@ -15,18 +16,32 @@ type LogLineParser struct {
 	SubSplitter  PartSplitter
 }
 
-func NewLogLineParser(structTypeName string) *LogLineParser {
-	return &LogLineParser{
-		StructType:   reflect2.TypeByName(structTypeName),
-		PartSplitter: NewBracketPartSplitter(),
-		SubSplitter:  NewSubSplitter(",", "-"),
+func NewLogLineParser(structPointerOrName interface{}) *LogLineParser {
+	structTypePtr := reflect.TypeOf(structPointerOrName)
+	kind := structTypePtr.Kind()
+	if kind == reflect.String {
+		return &LogLineParser{
+			StructType:   reflect2.TypeByName(structPointerOrName.(string)),
+			PartSplitter: NewBracketPartSplitter(),
+			SubSplitter:  NewSubSplitter(",", "-"),
+		}
 	}
+
+	if kind != reflect.Ptr {
+		logrus.Panicf("non struct ptr %v", structTypePtr)
+	}
+
+	elem := structTypePtr.Elem()
+	if elem.Kind() != reflect.Struct {
+		logrus.Panicf("non struct ptr %v", structTypePtr)
+	}
+
+	return NewLogLineParser(elem.String())
 }
 
 func (l *LogLineParser) Parse(line string) (interface{}, error) {
-	parts := l.PartSplitter.Parse(line)
 	p := l.StructType.New()
-	err := l.parse(parts, p)
+	err := l.parse(l.PartSplitter.Parse(line), p)
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +68,7 @@ func createStructField(fieldIndex int, f reflect.StructField) interface{} {
 }
 
 func (l *LogLineParser) parse(parts []string, result interface{}) error {
-	v, err := CheckStructPtr(result)
-	if err != nil {
-		return err
-	}
-
+	v := reflect.ValueOf(result).Elem()
 	structFields := l.FieldsCache.CachedStructFields(v.Type(), createStructField).([]structField)
 
 	for _, sf := range structFields {
