@@ -22,7 +22,7 @@ func NewLogLineParser(structPointerOrName interface{}) *LogLineParser {
 	if kind == reflect.String {
 		return &LogLineParser{
 			StructType:   reflect2.TypeByName(structPointerOrName.(string)),
-			PartSplitter: NewBracketPartSplitter(),
+			PartSplitter: NewBracketPartSplitter("-"),
 			SubSplitter:  NewSubSplitter(",", "-"),
 		}
 	}
@@ -175,8 +175,6 @@ func parsePart(sf structField, parts []string) string {
 	if sf.PartIndex < len(parts) {
 		part = parts[sf.PartIndex]
 	}
-	if part == "-" {
-		part = ""
-	}
+
 	return part
 }

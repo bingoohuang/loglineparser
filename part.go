@@ -7,27 +7,28 @@ import (
 // PartSplitter 表示日志行分割器
 type PartSplitter interface {
 	// ParseParts 解析成各个部分
-	Parse(line string) []string
+	Parse(s string) []string
 }
 
 // bracketPartSplitter 定义了[]分割器
 type bracketPartSplitter struct {
+	emptyPlaceholder string
 }
 
-func NewBracketPartSplitter() PartSplitter {
-	return &bracketPartSplitter{}
+func NewBracketPartSplitter(emptyPlaceholder string) PartSplitter {
+	return &bracketPartSplitter{emptyPlaceholder: emptyPlaceholder}
 }
 
 // LoadLine 初始化
-func (b *bracketPartSplitter) Parse(line string) []string {
-	gr := uniseg.NewGraphemes(line)
+func (b bracketPartSplitter) Parse(s string) []string {
+	gr := uniseg.NewGraphemes(s)
 	reserved := ""
 	parts := make([]string, 0)
 	var p string
 	var ok bool
 
 	for {
-		reserved, p, ok = next(gr, reserved)
+		reserved, p, ok = b.next(gr, reserved)
 		if !ok {
 			break
 		}
@@ -39,7 +40,7 @@ func (b *bracketPartSplitter) Parse(line string) []string {
 }
 
 // next 返回（reserved, part, ok)
-func next(gr *uniseg.Graphemes, reserved string) (string, string, bool) {
+func (b bracketPartSplitter) next(gr *uniseg.Graphemes, reserved string) (string, string, bool) {
 	last := ""
 	word := ""
 	found := false
@@ -64,6 +65,9 @@ func next(gr *uniseg.Graphemes, reserved string) (string, string, bool) {
 	PROCESS:
 		if maybeEnd {
 			if IsBlank(s) || !IsAlphanumeric(s) {
+				if word == b.emptyPlaceholder {
+					word = ""
+				}
 				return s, word, true
 			}
 

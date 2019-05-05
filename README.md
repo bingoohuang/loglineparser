@@ -1,6 +1,6 @@
 # loglineparser
 
-log parser to golang struct
+log parser to parse log line to relative golang struct.
 
 ## 日志格式定义
 
@@ -136,10 +136,11 @@ $ go test -bench=.
 goos: darwin
 goarch: amd64
 pkg: github.com/bingoohuang/loglineparser
-BenchmarkParseGatewayMonV2-12          	   20000	     89578 ns/op
-BenchmarkMakeBracketPartSplitter-12    	   30000	     49549 ns/op
+BenchmarkParseGatewayMonV2-12          	   20000	     97816 ns/op
+BenchmarkFastParseGatewayMonV2-12      	   20000	     81113 ns/op
+BenchmarkMakeBracketPartSplitter-12    	   30000	     52485 ns/op
 PASS
 ok  	github.com/bingoohuang/loglineparser	4.730s
 ```
 
-> [89578 Nanoseconds = 0.089578 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#89578)
+> [97816 Nanoseconds = 0.097816 Milliseconds](https://convertlive.com/u/convert/nanoseconds/to/milliseconds#97816)

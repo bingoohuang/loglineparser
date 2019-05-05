@@ -1,6 +1,8 @@
 package loglineparser
 
 import (
+	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"unicode"
@@ -94,4 +96,30 @@ func ParseInt(s string, defaultValue int) int {
 		return i
 	}
 	return defaultValue
+}
+
+func ParseFloat32(s string, defaultValue float32) float32 {
+	value, err := strconv.ParseFloat(s, 32)
+	if err != nil {
+		return defaultValue
+	}
+	return float32(value)
+}
+
+func ParseBool(s string, defaultValue bool) bool {
+	v, e := strconv.ParseBool(s)
+	if e != nil {
+		return defaultValue
+	}
+	return v
+}
+
+func UnmarshalMap(s string) map[string]string {
+	m := make(map[string]string)
+	err := json.Unmarshal([]byte(s), &m)
+	if err != nil {
+		logrus.Warnf("unmarshal %s to map failed %v", s, err)
+	}
+
+	return m
 }

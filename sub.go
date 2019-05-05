@@ -9,10 +9,10 @@ func NewSubSplitter(sep, emptyPlaceholder string) PartSplitter {
 	return &logPartSplitter{sep: sep, emptyPlaceholder: emptyPlaceholder}
 }
 
-func (l *logPartSplitter) Parse(part string) []string {
-	subs := SplitN(part, l.sep, true, false)
+func (l *logPartSplitter) Parse(s string) []string {
+	subs := SplitN(s, l.sep, true, false)
 	for i, p := range subs {
-		if p == "-" {
+		if p == l.emptyPlaceholder {
 			subs[i] = ""
 		}
 	}

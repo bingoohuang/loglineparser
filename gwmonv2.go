@@ -88,3 +88,67 @@ type GatewayMonV2 struct {
 	AnchorProduceResponse string `llp:"13.9" json:"anchorProduceResponse"`
 	AnchorOutputLog       string `llp:"13.10" json:"anchorOutputLog"`
 }
+
+func FastCreateGatewayMonV2(line string) GatewayMonV2 {
+	parts := NewBracketPartSplitter("-").Parse(line)
+	subSpitter := NewSubSplitter(",", "-")
+
+	subs5 := subSpitter.Parse(parts[5])
+	subs6 := subSpitter.Parse(parts[6])
+	subs7 := subSpitter.Parse(parts[7])
+	subs8 := subSpitter.Parse(parts[8])
+	subs10 := subSpitter.Parse(parts[10])
+	subs13 := subSpitter.Parse(parts[13])
+
+	return GatewayMonV2{
+		LogType:       parts[2],
+		GatewayStatus: parts[3],
+		ApiVersionId:  parts[4],
+
+		RespStatus:            subs5[0],
+		RespResponseTime:      ParseFloat32(subs5[1], -1),
+		RespInnerResponseTime: ParseFloat32(subs5[2], -1),
+		RespInnerStartReqTime: ParseTime(subs5[3]),
+		RespBodySize:          ParseInt(subs5[4], -1),
+
+		UserTime:     ParseTime(subs6[0]),
+		UserClientIP: subs6[1],
+		UserUid:      subs6[2],
+		RequestSize:  ParseInt(subs6[3], -1),
+
+		RequestId: subs7[0],
+		TraceId:   subs7[1],
+		ServiceId: subs7[2],
+
+		AuthIsLocalIP:          ParseBool(subs8[0], false),
+		AuthKeySecretCheckRst:  subs8[1],
+		AuthSessionCheckRst:    subs8[2],
+		AuthSid:                subs8[3],
+		AuthUcenterPlatform:    subs8[4],
+		AuthCheckLoginTokenRst: subs8[5],
+		AuthCookie:             subs8[6],
+		AuthInvalidMsg:         subs8[7],
+
+		ApiSessionVarMap: UnmarshalMap(parts[9]),
+
+		UserRealIP:        subs10[0],
+		UserUa:            subs10[1],
+		LastHop:           subs10[2],
+		UserXForwardedFor: subs10[3],
+
+		RequestBody: parts[11],
+		RespBody:    parts[12],
+
+		AnchorInitVar:         subs13[0],
+		AnchorSearchApi:       subs13[1],
+		AnchorCheckDevelop:    subs13[2],
+		AnchorCheckApp:        subs13[3],
+		AnchorCheckSession:    subs13[4],
+		AnchorCheckSafe:       subs13[5],
+		AnchorStartRequest:    subs13[6],
+		AnchorProduceCookie:   subs13[7],
+		AnchorEncryptCookie:   subs13[8],
+		AnchorProduceResponse: subs13[9],
+		AnchorOutputLog:       subs13[10],
+	}
+}
