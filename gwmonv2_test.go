@@ -87,23 +87,23 @@ func TestParseGatewayMonV2(t *testing.T) {
 	}, v)
 }
 
-type MyIP struct {
-	net.IP
-}
+type MyIP net.IP
 
 func (i *MyIP) Unmarshal(v string) error {
 	ip := net.ParseIP(v)
 	if ip == nil {
 		return errors.New("bad format ip " + v)
 	}
-	i.IP = ip
+	*i = MyIP(ip)
 
 	return nil
 }
 
+var _ loglineparser.Unmarshaler = (*MyIP)(nil)
+
 // 实现参考自: https://github.com/projectcalico/libcalico-go/blob/master/lib/net/ip.go
 func (i MyIP) MarshalJSON() ([]byte, error) {
-	s, err := i.MarshalText()
+	s, err := net.IP(i).MarshalText()
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +131,7 @@ func TestCustomDecode(t *testing.T) {
 	a.Equal(LogLine{
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
-		UserClientIP: MyIP{net.ParseIP("192.168.106.8")},
+		UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
 		Xy:           "x,y",
 	}, v)
 }
@@ -161,7 +161,7 @@ func TestCustomDecode2(t *testing.T) {
 	a.Equal(LogLine2{
 		LogType: "GatewayMonV2",
 		LogLineUser: LogLineUser{UserTime: loglineparser.ParseTime("1539866805.135"),
-			UserClientIP: MyIP{net.ParseIP("192.168.106.8")}},
+			UserClientIP: MyIP(net.ParseIP("192.168.106.8"))},
 		Xy: "x,y",
 	}, v)
 }

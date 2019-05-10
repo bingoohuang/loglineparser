@@ -48,7 +48,6 @@ func ParseLogLine(line string) (LogLine, error) {
 	return v.(LogLine), err
 }
 
-
 ```
 
 其中，结构体LogLine各个字段tag中的`llp`（loglineparser的缩写）部分，使用以下表达方式：
@@ -72,33 +71,24 @@ import (
 	"time"
 )
 
-type MyIP struct {
-	net.IP
-}
+type MyIP net.IP
 
 func (i *MyIP) Unmarshal(v string) error {
 	ip := net.ParseIP(v)
 	if ip == nil {
 		return errors.New("bad format ip " + v)
 	}
-	i.IP = ip
+	*i = MyIP(ip)
 
 	return nil
 }
 
-func (i MyIP) MarshalJSON() ([]byte, error) {
-	s, err := i.MarshalText()
-	if err != nil {
-		return nil, err
-	}
-	return json.Marshal(string(s))
-}
+var _ loglineparser.Unmarshaler = (*MyIP)(nil)
 
 type LogLine struct {
-	LogType string `llp:"2" json:"logType"` // GatewayMonV2
-
-	UserTime     time.Time `llp:"3.0" json:"reqTime"`
-	UserClientIP MyIP       `llp:"3.1" json:"userClientIP"`
+	LogType      string     `llp:"2" json:"logType"`
+	UserTime     time.Time  `llp:"3.0"`
+	UserClientIP MyIP       `llp:"3.1"`
 }
 
 
@@ -114,17 +104,16 @@ func TestCustomDecode(t *testing.T) {
 	a.Equal(LogLine{
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
-		UserClientIP: MyIP{net.ParseIP("192.168.106.8")},
+		UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
 	}, v)
 }
-
 
 ```
 
 
 ## 运行测试
 
-1. 运行测试用例 `go test ./...`
+1. 运行测试用例 `go fmt ./...; go test ./... -v -count=1`
 1. 运行基准用例 `go test -bench=.`
 
 ```bash
