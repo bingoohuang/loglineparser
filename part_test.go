@@ -1,14 +1,18 @@
+// nolint lll
 package loglineparser_test
 
 import (
+	"testing"
+
 	"github.com/bingoohuang/loglineparser"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func BenchmarkMakeBracketPartSplitter(b *testing.B) {
 	b.ResetTimer()
+
 	parser := loglineparser.NewBracketPartSplitter("-")
+
 	for i := 0; i < b.N; i++ {
 		parseLine(parser)
 	}

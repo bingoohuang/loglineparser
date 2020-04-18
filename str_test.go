@@ -2,10 +2,11 @@ package loglineparser_test
 
 import (
 	"fmt"
-	"github.com/bingoohuang/loglineparser"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
+
+	"github.com/bingoohuang/loglineparser"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsBlank(t *testing.T) {
@@ -24,5 +25,4 @@ func TestIsBlank(t *testing.T) {
 	elem := pv.Type().Elem()
 	ev := reflect.Zero(elem).Interface().(Papa)
 	ev.Name = "bingoo"
-	//fmt.Println(ev)
 }

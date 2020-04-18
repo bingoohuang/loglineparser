@@ -3,12 +3,14 @@ package loglineparser
 import (
 	"encoding/json"
 	"errors"
-	"github.com/modern-go/reflect2"
-	"github.com/sirupsen/logrus"
 	"reflect"
 	"time"
+
+	"github.com/modern-go/reflect2"
+	"github.com/sirupsen/logrus"
 )
 
+// LogLineParser defines the struct representing parser for log line.
 type LogLineParser struct {
 	FieldsCache  StructFieldsCache
 	StructType   reflect2.Type
@@ -16,32 +18,46 @@ type LogLineParser struct {
 	SubSplitter  PartSplitter
 }
 
+// NewLogLineParser creates a new LogLineParser.
 func NewLogLineParser(structPointerOrName interface{}) *LogLineParser {
 	structTypePtr := reflect.TypeOf(structPointerOrName)
-	kind := structTypePtr.Kind()
-	if kind == reflect.String {
+
+	switch kind := structTypePtr.Kind(); kind {
+	case reflect.String:
 		return &LogLineParser{
 			StructType:   reflect2.TypeByName(structPointerOrName.(string)),
 			PartSplitter: NewBracketPartSplitter("-"),
 			SubSplitter:  NewSubSplitter(",", "-"),
 		}
+	case reflect.Struct:
+		return &LogLineParser{
+			StructType:   reflect2.Type2(structTypePtr),
+			PartSplitter: NewBracketPartSplitter("-"),
+			SubSplitter:  NewSubSplitter(",", "-"),
+		}
+	case reflect.Ptr:
+		elem := structTypePtr.Elem()
+		if elem.Kind() != reflect.Struct {
+			logrus.Panicf("non struct ptr %v", structTypePtr)
+		}
+
+		return &LogLineParser{
+			StructType:   reflect2.Type2(elem),
+			PartSplitter: NewBracketPartSplitter("-"),
+			SubSplitter:  NewSubSplitter(",", "-"),
+		}
 	}
 
-	if kind != reflect.Ptr {
-		logrus.Panicf("non struct ptr %v", structTypePtr)
-	}
+	logrus.Panicf("non struct ptr %v", structTypePtr)
 
-	elem := structTypePtr.Elem()
-	if elem.Kind() != reflect.Struct {
-		logrus.Panicf("non struct ptr %v", structTypePtr)
-	}
-
-	return NewLogLineParser(elem.String())
+	return nil
 }
 
+// Parse parses a line string.
 func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	p := l.StructType.New()
 	err := l.parse(l.PartSplitter.Parse(line), p)
+
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +72,7 @@ func createStructField(fieldIndex int, f reflect.StructField) interface{} {
 	}
 
 	partIndex, subIndex := parseTwoInts(tag, -1)
+
 	return structField{
 		FieldIndex: fieldIndex,
 		PartIndex:  partIndex,
@@ -97,17 +114,18 @@ func parseTwoInts(tag string, defaultValue int) (int, int) {
 	return ParseInt(s0, defaultValue), ParseInt(s1, defaultValue)
 }
 
+// nolint gochecknoglobals
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
 func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Value) error {
 	if sf.Kind == reflect.Struct && sf.Anonymous {
 		fv := reflect.New(f.Type()).Interface()
-		err := l.parse(parts, fv)
-		if err != nil {
+		if err := l.parse(parts, fv); err != nil {
 			return err
 		}
 
 		f.Set(reflect.ValueOf(fv).Elem())
+
 		return nil
 	}
 
@@ -125,8 +143,10 @@ func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Valu
 		return nil
 	}
 
-	var fv interface{}
-	var err error
+	var (
+		fv  interface{}
+		err error
+	)
 
 	switch f.Interface().(type) {
 	case time.Time:
@@ -145,6 +165,7 @@ func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Valu
 	if err != nil {
 		return err
 	}
+
 	if fv != nil {
 		f.Set(reflect.ValueOf(fv).Elem())
 		return nil

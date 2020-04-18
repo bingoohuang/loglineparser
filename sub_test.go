@@ -1,9 +1,10 @@
 package loglineparser_test
 
 import (
+	"testing"
+
 	"github.com/bingoohuang/loglineparser"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMakeLogPartSplitter(t *testing.T) {

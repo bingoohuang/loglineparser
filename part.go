@@ -15,6 +15,7 @@ type bracketPartSplitter struct {
 	emptyPlaceholder string
 }
 
+// NewBracketPartSplitter creates a new instance of PartSplitter.
 func NewBracketPartSplitter(emptyPlaceholder string) PartSplitter {
 	return &bracketPartSplitter{emptyPlaceholder: emptyPlaceholder}
 }
@@ -24,8 +25,11 @@ func (b bracketPartSplitter) Parse(s string) []string {
 	gr := uniseg.NewGraphemes(s)
 	reserved := ""
 	parts := make([]string, 0)
-	var p string
-	var ok bool
+
+	var (
+		p  string
+		ok bool
+	)
 
 	for {
 		reserved, p, ok = b.next(gr, reserved)
@@ -39,6 +43,7 @@ func (b bracketPartSplitter) Parse(s string) []string {
 	return parts
 }
 
+// nolint gocognit
 // next 返回（reserved, part, ok)
 func (b bracketPartSplitter) next(gr *uniseg.Graphemes, reserved string) (string, string, bool) {
 	last := ""

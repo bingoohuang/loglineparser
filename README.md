@@ -1,12 +1,17 @@
 # loglineparser
 
+[![Travis CI](https://img.shields.io/travis/bingoohuang/loglineparser/master.svg?style=flat-square)](https://travis-ci.com/bingoohuang/loglineparser)
+[![Software License](https://img.shields.io/badge/License-MIT-orange.svg?style=flat-square)](https://github.com/bingoohuang/loglineparser/blob/master/LICENSE.md)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square)](https://godoc.org/github.com/bingoohuang/loglineparser)
+[![Coverage Status](http://codecov.io/github/bingoohuang/loglineparser/coverage.svg?branch=master)](http://codecov.io/github/bingoohuang/loglineparser?branch=master)
+[![goreport](https://www.goreportcard.com/badge/github.com/bingoohuang/loglineparser)](https://www.goreportcard.com/report/github.com/bingoohuang/loglineparser)
+
 log parser to parse log line to relative golang struct.
 
 ## 日志格式定义
 
 ```text
 2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [200, 0.023999929428101, 1539866805.135, 108],  [true, -, -], [{}] request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081"
-
 ```
 
 在形如以上日志行的日志中，以[xx]包含起来的，是需要提取的部分(parts)，索引号从0开始。
@@ -107,7 +112,6 @@ func TestCustomDecode(t *testing.T) {
 		UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
 	}, v)
 }
-
 ```
 
 

@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// nolint lll
 /*
  -- http://192.168.131.32:9000/develop/FOOTSTONE/GateWay/Code/api-gateway-ng/blob/master/lua/web/gateway.lua
  ngx.log(ngx.NOTICE, string.format("[%s] [%s], [%s], [%s, %s, %s, %s, %s], [%s, %s, %s, %s], [%s, %s, %s], [%s, %s, %s, %s, %s, %s, %s, %s], [%s], [%s, %s, %s, %s], [%s], [%s], [%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s], [-End-]",
@@ -37,10 +38,12 @@ import (
 2018/10/18 20:46:45 [notice] 18999#0: *53100390 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [10031], [200, 0.30400013923645, 0.30400013923645, 1539866804.86, 108], [1539866804.86, 192.168.106.8, -, 208], [-, 127.0.0.1-1539866804.86-18999-3942, -], [true, -, -, -, -, -, -, -], [{}], [-, Apache-HttpClient/4.5.5 (Java/1.8.0_181), 192.168.106.8, -], [-], [-], [-, -, -, -, -, -, -, -, -, -, -], [-End-] while sending to client, client: 192.168.106.8, server: localhost, request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081"
 2018/10/18 20:46:45 [notice] 19000#0: *53100587 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [10031], [200, 0.024999856948853, 0.024999856948853, 1539866805.14, 108], [1539866805.14, 192.168.106.8, -, 208], [-, 127.0.0.1-1539866805.14-19000-43, -], [true, -, -, -, -, -, -, -], [{}], [-, Apache-HttpClient/4.5.5 (Java/1.8.0_181), 192.168.106.8, -], [-], [-], [-, -, -, -, -, -, -, -, -, -, -], [-End-] while sending to client, client: 192.168.106.8, server: localhost, request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.1
 */
+
+// GatewayMonV2 is a special log line format for ngx gateway.
 type GatewayMonV2 struct {
 	LogType       string `llp:"2" json:"logType"` // GatewayMonV2
 	GatewayStatus string `llp:"3" json:"gatewayFlag"`
-	ApiVersionId  string `llp:"4" json:"apiVersionId"`
+	APIVersionID  string `llp:"4" json:"apiVersionId"`
 
 	RespStatus            string    `llp:"5.0" json:"respStatus"`
 	RespResponseTime      float32   `llp:"5.1" json:"respResponseTime"`
@@ -50,12 +53,12 @@ type GatewayMonV2 struct {
 
 	UserTime     time.Time `llp:"6.0" json:"reqTime"`
 	UserClientIP string    `llp:"6.1" json:"userClientIP"`
-	UserUid      string    `llp:"6.2" json:"userUid"`
+	UserUID      string    `llp:"6.2" json:"userUid"`
 	RequestSize  int       `llp:"6.3" json:"requestSize"`
 
-	RequestId string `llp:"7.0" json:"requestId"`
-	TraceId   string `llp:"7.1" json:"TraceId"`
-	ServiceId string `llp:"7.2" json:"serviceId"`
+	RequestID string `llp:"7.0" json:"requestId"`
+	TraceID   string `llp:"7.1" json:"TraceId"`
+	ServiceID string `llp:"7.2" json:"serviceId"`
 
 	AuthIsLocalIP          bool   `llp:"8.0" json:"authIsLocalIP"`
 	AuthKeySecretCheckRst  string `llp:"8.1" json:"authKeySecretCheckRst"`
@@ -66,7 +69,7 @@ type GatewayMonV2 struct {
 	AuthCookie             string `llp:"8.6" json:"authCookie"`
 	AuthInvalidMsg         string `llp:"8.7" json:"authInvalidMsg"`
 
-	ApiSessionVarMap map[string]string `llp:"9" json:"apiSessionVarMap"`
+	APISessionVarMap map[string]string `llp:"9" json:"apiSessionVarMap"`
 
 	UserRealIP        string `llp:"10.0" json:"userRealIP"`
 	UserUa            string `llp:"10.1" json:"userUa"`
@@ -77,7 +80,7 @@ type GatewayMonV2 struct {
 	RespBody    string `llp:"12" json:"respBody"`
 
 	AnchorInitVar         string `llp:"13.0" json:"anchorInitVar"`
-	AnchorSearchApi       string `llp:"13.1" json:"anchorSearchApi"`
+	AnchorSearchAPI       string `llp:"13.1" json:"anchorSearchApi"`
 	AnchorCheckDevelop    string `llp:"13.2" json:"anchorCheckDevelop"`
 	AnchorCheckApp        string `llp:"13.3" json:"anchorCheckApp"`
 	AnchorCheckSession    string `llp:"13.4" json:"anchorCheckSession"`
@@ -89,6 +92,8 @@ type GatewayMonV2 struct {
 	AnchorOutputLog       string `llp:"13.10" json:"anchorOutputLog"`
 }
 
+// FastCreateGatewayMonV2 ...
+// nolint funlen
 func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 	parts := NewBracketPartSplitter("-").Parse(line)
 	subSpitter := NewSubSplitter(",", "-")
@@ -103,7 +108,7 @@ func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 	return GatewayMonV2{
 		LogType:       parts[2],
 		GatewayStatus: parts[3],
-		ApiVersionId:  parts[4],
+		APIVersionID:  parts[4],
 
 		RespStatus:            subs5[0],
 		RespResponseTime:      ParseFloat32(subs5[1], -1),
@@ -113,12 +118,12 @@ func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 
 		UserTime:     ParseTime(subs6[0]),
 		UserClientIP: subs6[1],
-		UserUid:      subs6[2],
+		UserUID:      subs6[2],
 		RequestSize:  ParseInt(subs6[3], -1),
 
-		RequestId: subs7[0],
-		TraceId:   subs7[1],
-		ServiceId: subs7[2],
+		RequestID: subs7[0],
+		TraceID:   subs7[1],
+		ServiceID: subs7[2],
 
 		AuthIsLocalIP:          ParseBool(subs8[0], false),
 		AuthKeySecretCheckRst:  subs8[1],
@@ -129,7 +134,7 @@ func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 		AuthCookie:             subs8[6],
 		AuthInvalidMsg:         subs8[7],
 
-		ApiSessionVarMap: UnmarshalMap(parts[9]),
+		APISessionVarMap: UnmarshalMap(parts[9]),
 
 		UserRealIP:        subs10[0],
 		UserUa:            subs10[1],
@@ -140,7 +145,7 @@ func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 		RespBody:    parts[12],
 
 		AnchorInitVar:         subs13[0],
-		AnchorSearchApi:       subs13[1],
+		AnchorSearchAPI:       subs13[1],
 		AnchorCheckDevelop:    subs13[2],
 		AnchorCheckApp:        subs13[3],
 		AnchorCheckSession:    subs13[4],

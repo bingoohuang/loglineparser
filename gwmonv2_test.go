@@ -1,13 +1,15 @@
+// nolint lll
 package loglineparser_test
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/bingoohuang/loglineparser"
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
 	"time"
+
+	"github.com/bingoohuang/loglineparser"
+	"github.com/stretchr/testify/assert"
 )
 
 var gatewayMonV2Parser = loglineparser.NewLogLineParser((*loglineparser.GatewayMonV2)(nil))
@@ -23,23 +25,24 @@ func ParseGatewayMonV2(line string) (loglineparser.GatewayMonV2, error) {
 
 func BenchmarkParseGatewayMonV2(b *testing.B) {
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [10031], [200, 0.023999929428101, 0.023999929428101, 1539866805.135, 108], [1539866805.135, 192.168.106.8, -, 208],` +
 			` [-, 127.0.0.1-1539866805.135-19002-2879, -], [true, -, -, -, -, -, -, -], [{}], [-, Apache-HttpClient/4.5.5 (Java/1.8.0_181), 192.168.106.8, -], [-], [-], [-, -, -, -, -, -, -, -, -, -, -], [-End-] while sending to client, client: 192.168.106.8, server: localhost, request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081`
 		ParseGatewayMonV2(line)
-
 	}
 }
 
 func BenchmarkFastParseGatewayMonV2(b *testing.B) {
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [10031], [200, 0.023999929428101, 0.023999929428101, 1539866805.135, 108], [1539866805.135, 192.168.106.8, -, 208],` +
 			` [-, 127.0.0.1-1539866805.135-19002-2879, -], [true, -, -, -, -, -, -, -], [{}], [-, Apache-HttpClient/4.5.5 (Java/1.8.0_181), 192.168.106.8, -], [-], [-], [-, -, -, -, -, -, -, -, -, -, -], [-End-] while sending to client, client: 192.168.106.8, server: localhost, request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081`
 		loglineparser.FastCreateGatewayMonV2(line)
-
 	}
 }
+
 func TestParseGatewayMonV2(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [10031], [200, 0.023999929428101, 0.023999929428101, 1539866805.135, 108], [1539866805.135, 192.168.106.8, -, 208],` +
 		` [-, 127.0.0.1-1539866805.135-19002-2879, -], [true, -, -, -, -, -, -, -], [{}], [-, Apache-HttpClient/4.5.5 (Java/1.8.0_181), 192.168.106.8, -], [-], [-], [-, -, -, -, -, -, -, -, -, -, -], [-End-] while sending to client, client: 192.168.106.8, server: localhost, request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081`
@@ -52,7 +55,7 @@ func TestParseGatewayMonV2(t *testing.T) {
 	a.Equal(loglineparser.GatewayMonV2{
 		LogType:       "GatewayMonV2",
 		GatewayStatus: "200",
-		ApiVersionId:  "10031",
+		APIVersionID:  "10031",
 		RespStatus:    "200",
 
 		RespResponseTime:      0.023999929428101,
@@ -62,12 +65,12 @@ func TestParseGatewayMonV2(t *testing.T) {
 
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
 		UserClientIP: "192.168.106.8",
-		UserUid:      "",
+		UserUID:      "",
 		RequestSize:  208,
 
-		RequestId: "",
-		TraceId:   "127.0.0.1-1539866805.135-19002-2879",
-		ServiceId: "",
+		RequestID: "",
+		TraceID:   "127.0.0.1-1539866805.135-19002-2879",
+		ServiceID: "",
 
 		AuthIsLocalIP:          true,
 		AuthKeySecretCheckRst:  "",
@@ -78,7 +81,7 @@ func TestParseGatewayMonV2(t *testing.T) {
 		AuthCookie:             "",
 		AuthInvalidMsg:         "",
 
-		ApiSessionVarMap: map[string]string{},
+		APISessionVarMap: map[string]string{},
 
 		UserRealIP:        "",
 		UserUa:            "Apache-HttpClient/4.5.5 (Java/1.8.0_181)",
@@ -119,10 +122,10 @@ type LogLine struct {
 	Xy string `llp:"4" json:"xy"`
 }
 
-var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
-
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
+
+	var LogLineParser = loglineparser.NewLogLineParser(LogLine{})
 
 	v, err := LogLineParser.Parse(line)
 

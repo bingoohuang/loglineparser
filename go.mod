@@ -1,5 +1,7 @@
 module github.com/bingoohuang/loglineparser
 
+go 1.14
+
 require (
 	github.com/araddon/dateparse v0.0.0-20190426192744-0d74ffceef83
 	github.com/kr/pretty v0.1.0 // indirect

@@ -1,39 +1,44 @@
 package loglineparser
 
 import (
-	"fmt"
-	"github.com/spf13/cast"
 	"reflect"
 	"sync"
+
+	"github.com/spf13/cast"
 )
 
+// StructFieldsCache defines the cache of struct fields.
 type StructFieldsCache struct {
 	fieldsCache sync.Map // map[reflect.Type][]field
 }
 
 // CachedStructFields caches fields of struct type
-func (s *StructFieldsCache) CachedStructFields(t reflect.Type, fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
+func (s *StructFieldsCache) CachedStructFields(t reflect.Type,
+	fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
 	if f, ok := s.fieldsCache.Load(t); ok {
 		return f
 	}
+
 	f, _ := s.fieldsCache.LoadOrStore(t, typeFields(t, fn))
+
 	return f
 }
 
 func typeFields(t reflect.Type, fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
-	ff := t.NumField()
 	var fields reflect.Value
 
-	for fi := 0; fi < ff; fi++ {
+	for fi := 0; fi < t.NumField(); fi++ {
 		f := t.Field(fi)
 		field := fn(fi, f)
+
 		if field == nil {
 			continue
 		}
 
 		fv := reflect.ValueOf(field)
+
 		if !fields.IsValid() {
-			fields = reflect.MakeSlice(reflect.SliceOf(fv.Type()), 0, ff)
+			fields = reflect.MakeSlice(reflect.SliceOf(fv.Type()), 0, t.NumField())
 		}
 
 		fields = reflect.Append(fields, fv)
@@ -42,19 +47,7 @@ func typeFields(t reflect.Type, fn func(fieldIndex int, f reflect.StructField) i
 	return fields.Interface()
 }
 
-func CheckStructPtr(v interface{}) (reflect.Value, error) {
-	structTypePtr := reflect.TypeOf(v)
-	if structTypePtr.Kind() != reflect.Ptr {
-		return reflect.Value{}, fmt.Errorf("non struct ptr %v", structTypePtr)
-	}
-	elem := reflect.ValueOf(v).Elem()
-	if elem.Kind() != reflect.Struct {
-		return reflect.Value{}, fmt.Errorf("non struct ptr %v", structTypePtr)
-	}
-
-	return elem, nil
-}
-
+// AssignBasicValue assigns v as basic types lie string/(u)int(8/16/32/64) or its type self.
 func AssignBasicValue(f reflect.Value, v interface{}) bool {
 	if reflect.TypeOf(v) == f.Type() {
 		f.Set(reflect.ValueOf(v))
