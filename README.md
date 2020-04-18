@@ -29,37 +29,39 @@ import (
 )
 
 type LogLine struct {
-	LogLevel      string `llp:"0" json:"logLevel"`    // notice
-	GatewayStatus string `llp:"2" json:"gatewayFlag"` // GatewayMonV2
+	LogLevel      string `llp:"0"`    // notice
+	GatewayStatus string `llp:"2"` // GatewayMonV2
 
-	RespStatus            string    `llp:"4.0" json:"respStatus"`
-	RespResponseTime      float32   `llp:"4.1" json:"respResponseTime"`
-	RespInnerStartReqTime time.Time `llp:"4.2" json:"respInnerStartReqTime"`
-	RespBodySize          int       `llp:"4.3" json:"respBodySize"`
+	RespStatus            string    `llp:"4.0"`
+	RespResponseTime      float32   `llp:"4.1"`
+	RespInnerStartReqTime time.Time `llp:"4.2"`
+	RespBodySize          int       `llp:"4.3"`
 
 
-	AuthIsLocalIP          bool   `llp:"5.0" json:"authIsLocalIP"`
-	AuthKeySecretCheckRst  string `llp:"5.1" json:"authKeySecretCheckRst"`
+	AuthIsLocalIP          bool   `llp:"5.0"`
+	AuthKeySecretCheckRst  string `llp:"5.1"`
 	
-	ApiSessionVarMap map[string]string `llp:"6" json:"apiSessionVarMap"`
+	ApiSessionVarMap map[string]string `llp:"6"`
 }
 
 
-var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
+var logLineParser = loglineparser.NewLogLineParser(LogLine{})
 
 // ParseLogLine 解析一行日志
 func ParseLogLine(line string) (LogLine, error) {
-	v, err := LogLineParser.Parse(line)
-	return v.(LogLine), err
-}
+	v, err := logLineParser.Parse(line)
+    if err != nil {
+        return LogLine{}, err
+    }
 
+	return v.(LogLine), nil
+}
 ```
 
 其中，结构体LogLine各个字段tag中的`llp`（loglineparser的缩写）部分，使用以下表达方式：
 
 1. x 表示取第x个（从0开始）提取值，并且根据需要，进行合适的类型转换。
 1. x.y 表示取第x个（从0开始）提取值的第y个（从0开始）子值，进行合适的类型转换。
-
 
 如果需要实现自定义解码，可以参考以下示例：
 
@@ -88,25 +90,22 @@ func (i *MyIP) Unmarshal(v string) error {
 	return nil
 }
 
-var _ loglineparser.Unmarshaler = (*MyIP)(nil)
-
 type LogLine struct {
-	LogType      string     `llp:"2" json:"logType"`
+	LogType      string     `llp:"2"`
 	UserTime     time.Time  `llp:"3.0"`
 	UserClientIP MyIP       `llp:"3.1"`
 }
 
 
-var LogLineParser = loglineparser.NewLogLineParser((*LogLine)(nil))
+var logLineParser = loglineparser.NewLogLineParser(LogLine{})
 
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
 
-	v, err := LogLineParser.Parse(line)
+	v, err := logLineParser.Parse(line)
 
-	a := assert.New(t)
-	a.Nil(err)
-	a.Equal(LogLine{
+	assert.Nil(t, err)
+	assert.Equal(t, LogLine{
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
 		UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
