@@ -3,63 +3,74 @@ package loglineparser
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/modern-go/reflect2"
-	"github.com/sirupsen/logrus"
 )
 
 // LogLineParser defines the struct representing parser for log line.
 type LogLineParser struct {
 	FieldsCache  StructFieldsCache
 	StructType   reflect2.Type
+	Ptr          bool
 	PartSplitter PartSplitter
 	SubSplitter  PartSplitter
 }
 
-// NewLogLineParser creates a new LogLineParser.
-func NewLogLineParser(structPointerOrName interface{}) *LogLineParser {
+// New creates a new LogLineParser.
+func New(structPointerOrName interface{}) (*LogLineParser, error) {
 	structTypePtr := reflect.TypeOf(structPointerOrName)
 
 	switch kind := structTypePtr.Kind(); kind {
 	case reflect.String:
+		name := structPointerOrName.(string)
+		ptr := strings.HasPrefix(name, "*")
+		if ptr {
+			name = name[1:]
+		}
 		return &LogLineParser{
-			StructType:   reflect2.TypeByName(structPointerOrName.(string)),
+			StructType:   reflect2.TypeByName(name),
+			Ptr:          ptr,
 			PartSplitter: NewBracketPartSplitter("-"),
 			SubSplitter:  NewSubSplitter(",", "-"),
-		}
+		}, nil
 	case reflect.Struct:
 		return &LogLineParser{
 			StructType:   reflect2.Type2(structTypePtr),
+			Ptr:          false,
 			PartSplitter: NewBracketPartSplitter("-"),
 			SubSplitter:  NewSubSplitter(",", "-"),
-		}
+		}, nil
 	case reflect.Ptr:
 		elem := structTypePtr.Elem()
 		if elem.Kind() != reflect.Struct {
-			logrus.Panicf("non struct ptr %v", structTypePtr)
+			return nil, fmt.Errorf("non struct ptr %v", structTypePtr)
 		}
 
 		return &LogLineParser{
 			StructType:   reflect2.Type2(elem),
+			Ptr:          true,
 			PartSplitter: NewBracketPartSplitter("-"),
 			SubSplitter:  NewSubSplitter(",", "-"),
-		}
+		}, nil
 	}
 
-	logrus.Panicf("non struct ptr %v", structTypePtr)
-
-	return nil
+	return nil, fmt.Errorf("non struct ptr %v", structTypePtr)
 }
 
 // Parse parses a line string.
 func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	p := l.StructType.New()
 	err := l.parse(l.PartSplitter.Parse(line), p)
-
 	if err != nil {
 		return nil, err
+	}
+
+	if l.Ptr {
+		return p, nil
 	}
 
 	return reflect.ValueOf(p).Elem().Interface(), nil

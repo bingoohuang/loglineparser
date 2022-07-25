@@ -14,7 +14,8 @@ type StructFieldsCache struct {
 
 // CachedStructFields caches fields of struct type
 func (s *StructFieldsCache) CachedStructFields(t reflect.Type,
-	fn func(fieldIndex int, f reflect.StructField) interface{}) interface{} {
+	fn func(fieldIndex int, f reflect.StructField) interface{},
+) interface{} {
 	if f, ok := s.fieldsCache.Load(t); ok {
 		return f
 	}

@@ -29,8 +29,10 @@ func TestMakeBracketPartSplitter(t *testing.T) {
 	a := assert.New(t)
 	parser := loglineparser.NewBracketPartSplitter("-")
 
-	parts := []string{"notice", "lua", "GatewayMonV2", "2001", "", "404, -, -, -, -", "1556305921.3, 100.120.36.178, -, 19", "-, 127.0.0.1-1556305921.3-17618-470, -",
-		"false, -, -, -, -, -, -, -", "", "-, -, 100.120.36.178, -", "", "", "-, -, -, -, -, -, -, -, -, -, -", "-End-"}
+	parts := []string{
+		"notice", "lua", "GatewayMonV2", "2001", "", "404, -, -, -, -", "1556305921.3, 100.120.36.178, -, 19", "-, 127.0.0.1-1556305921.3-17618-470, -",
+		"false, -, -, -, -, -, -, -", "", "-, -, 100.120.36.178, -", "", "", "-, -, -, -, -, -, -, -, -, -, -", "-End-",
+	}
 
 	a.Equal(parts, parseLine(parser))
 }

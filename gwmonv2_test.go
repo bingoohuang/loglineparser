@@ -12,15 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var gatewayMonV2Parser = loglineparser.NewLogLineParser((*loglineparser.GatewayMonV2)(nil))
+var gatewayMonV2Parser, _ = loglineparser.New((*loglineparser.GatewayMonV2)(nil))
 
-// or var gatewayMonV2Parser = loglineparser.NewLogLineParser("loglineparser.GatewayMonV2")
+// or var gatewayMonV2Parser = loglineparser.New("loglineparser.GatewayMonV2")
 
 // ParseGatewayMonV2 解析GatewayMonV2日志
-func ParseGatewayMonV2(line string) (loglineparser.GatewayMonV2, error) {
+func ParseGatewayMonV2(line string) (*loglineparser.GatewayMonV2, error) {
 	v, err := gatewayMonV2Parser.Parse(line)
 
-	return v.(loglineparser.GatewayMonV2), err
+	return v.(*loglineparser.GatewayMonV2), err
 }
 
 func BenchmarkParseGatewayMonV2(b *testing.B) {
@@ -51,7 +51,7 @@ func TestParseGatewayMonV2(t *testing.T) {
 
 	a := assert.New(t)
 	a.Nil(err)
-	a.Equal(v2, v)
+	a.Equal(v2, *v)
 	a.Equal(loglineparser.GatewayMonV2{
 		LogType:       "GatewayMonV2",
 		GatewayStatus: "200",
@@ -87,7 +87,7 @@ func TestParseGatewayMonV2(t *testing.T) {
 		UserUa:            "Apache-HttpClient/4.5.5 (Java/1.8.0_181)",
 		LastHop:           "192.168.106.8",
 		UserXForwardedFor: "",
-	}, v)
+	}, *v)
 }
 
 type MyIP net.IP
@@ -125,7 +125,7 @@ type LogLine struct {
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
 
-	var LogLineParser = loglineparser.NewLogLineParser(LogLine{})
+	LogLineParser, _ := loglineparser.New(LogLine{})
 
 	v, err := LogLineParser.Parse(line)
 
@@ -152,7 +152,7 @@ type LogLine2 struct {
 	Xy string `llp:"4" json:"xy"`
 }
 
-var LogLine2Parser = loglineparser.NewLogLineParser("loglineparser_test.LogLine2")
+var LogLine2Parser, _ = loglineparser.New("loglineparser_test.LogLine2")
 
 func TestCustomDecode2(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
@@ -163,8 +163,10 @@ func TestCustomDecode2(t *testing.T) {
 	a.Nil(err)
 	a.Equal(LogLine2{
 		LogType: "GatewayMonV2",
-		LogLineUser: LogLineUser{UserTime: loglineparser.ParseTime("1539866805.135"),
-			UserClientIP: MyIP(net.ParseIP("192.168.106.8"))},
+		LogLineUser: LogLineUser{
+			UserTime:     loglineparser.ParseTime("1539866805.135"),
+			UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
+		},
 		Xy: "x,y",
 	}, v)
 }

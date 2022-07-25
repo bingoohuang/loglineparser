@@ -128,7 +128,6 @@ func ParseBool(s string, defaultValue bool) bool {
 func UnmarshalMap(s string) map[string]string {
 	m := make(map[string]string)
 	err := json.Unmarshal([]byte(s), &m)
-
 	if err != nil {
 		logrus.Warnf("unmarshal %s to map failed %v", s, err)
 	}

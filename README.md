@@ -45,16 +45,16 @@ type LogLine struct {
 }
 
 
-var logLineParser = loglineparser.NewLogLineParser(LogLine{})
+var logLineParser, _ = loglineparser.New(&LogLine{})
 
 // ParseLogLine 解析一行日志
-func ParseLogLine(line string) (LogLine, error) {
+func ParseLogLine(line string) (*LogLine, error) {
 	v, err := logLineParser.Parse(line)
     if err != nil {
-        return LogLine{}, err
+        return nil, err
     }
 
-	return v.(LogLine), nil
+	return v.(*LogLine), nil
 }
 ```
 
@@ -97,7 +97,7 @@ type LogLine struct {
 }
 
 
-var logLineParser = loglineparser.NewLogLineParser(LogLine{})
+var logLineParser, _ = loglineparser.New(&LogLine{})
 
 func TestCustomDecode(t *testing.T) {
 	line := `2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2], [1539866805.135, 192.168.106.8, -, 208] [x,y] xxxxx`
@@ -109,7 +109,7 @@ func TestCustomDecode(t *testing.T) {
 		LogType:      "GatewayMonV2",
 		UserTime:     loglineparser.ParseTime("1539866805.135"),
 		UserClientIP: MyIP(net.ParseIP("192.168.106.8")),
-	}, v)
+	}, *v)
 }
 ```
 
