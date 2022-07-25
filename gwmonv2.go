@@ -90,6 +90,10 @@ type GatewayMonV2 struct {
 	AnchorEncryptCookie   string `llp:"13.8" json:"anchorEncryptCookie"`
 	AnchorProduceResponse string `llp:"13.9" json:"anchorProduceResponse"`
 	AnchorOutputLog       string `llp:"13.10" json:"anchorOutputLog"`
+
+	Method string `llp:"reg" reg:"request: \"([A-Z]+)"` // 使用正则表达式捕获，默认捕获组
+	//  host: "192.168.108.11:8081"
+	Host string `llp:"reg" reg:"host: \"(.*?)\"" group:"1"` // 使用正则表达式捕获，默认捕获组
 }
 
 // FastCreateGatewayMonV2 ...

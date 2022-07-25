@@ -6,7 +6,7 @@ import (
 
 // PartSplitter 表示日志行分割器
 type PartSplitter interface {
-	// ParseParts 解析成各个部分
+	// Parse 解析成各个部分
 	Parse(s string) []string
 }
 

@@ -14,9 +14,8 @@ log parser to parse log line to relative golang struct.
 2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [200, 0.023999929428101, 1539866805.135, 108],  [true, -, -], [{}] request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081"
 ```
 
-在形如以上日志行的日志中，以[xx]包含起来的，是需要提取的部分(parts)，索引号从0开始。
-
-然后在xx中，可能有多个子字段(subs)，比如[200, 0.023999929428101, 1539866805.135, 108]，这个以逗号分隔的，是子字段(subs)。
+1. 在形如以上日志行的日志中，以[xx]包含起来的，是需要提取的部分(parts)，索引号从0开始。 然后在xx中，可能有多个子字段(subs)，比如[200, 0.023999929428101, 1539866805.135, 108]，这个以逗号分隔的，是子字段(subs)。
+2. 或者使用正则表达式的捕获组提取字段值，见下面的示例
 
 可以定义以下go语言的结构体，来映射这些提取部分(parts)，或者提取子字段(subs):
 
@@ -42,6 +41,12 @@ type LogLine struct {
 	AuthKeySecretCheckRst  string `llp:"5.1"`
 	
 	ApiSessionVarMap map[string]string `llp:"6"`
+
+
+	// 例如：捕获 request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1" 中的 POST 部分
+	Method string `llp:"reg" reg:"request: \"([A-Z]+)"` // 使用正则表达式捕获，默认捕获组 1
+	// 例如：捕获 host: "192.168.108.11:8081" 中的 192.168.108.11:8081 部分
+	Host string `llp:"reg" reg:"host: \"(.*?)\"" group:"1"` // 使用正则表达式捕获，捕获组序号 1
 }
 
 

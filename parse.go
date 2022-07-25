@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,7 +67,9 @@ func New(structPointerOrName interface{}) (*LogLineParser, error) {
 // Parse parses a line string.
 func (l *LogLineParser) Parse(line string) (interface{}, error) {
 	p := l.StructType.New()
-	err := l.parse(l.PartSplitter.Parse(line), p)
+
+	parts := l.PartSplitter.Parse(line)
+	err := l.parseParts(line, parts, p)
 	if err != nil {
 		return nil, err
 	}
@@ -82,25 +87,39 @@ func createStructField(fieldIndex int, f reflect.StructField) interface{} {
 		return nil
 	}
 
-	partIndex, subIndex := parseTwoInts(tag, -1)
-
-	return structField{
+	sf := structField{
 		FieldIndex: fieldIndex,
-		PartIndex:  partIndex,
-		SubIndex:   subIndex,
 		Kind:       f.Type.Kind(),
 		Type:       f.Type,
 		PtrType:    reflect.PtrTo(f.Type),
 		Anonymous:  f.Anonymous,
 	}
+
+	if tag == "reg" {
+		group := 1
+		var err error
+		if groupTag := f.Tag.Get("group"); groupTag != "" {
+			if group, err = strconv.Atoi(groupTag); err != nil {
+				log.Fatalf("group %s is not a valid number", groupTag)
+			}
+		}
+
+		regTag := f.Tag.Get("reg")
+		sf.Regexp = regexp.MustCompile(regTag)
+		sf.RegexpGroup = group
+	} else {
+		sf.PartIndex, sf.SubIndex = parseTwoInts(tag, -1)
+	}
+
+	return sf
 }
 
-func (l *LogLineParser) parse(parts []string, result interface{}) error {
+func (l *LogLineParser) parseParts(line string, parts []string, result interface{}) error {
 	v := reflect.ValueOf(result).Elem()
 	structFields := l.FieldsCache.CachedStructFields(v.Type(), createStructField).([]structField)
 
 	for _, sf := range structFields {
-		err := l.fillField(parts, sf, v.Field(sf.FieldIndex))
+		err := l.fillField(line, parts, sf, v.Field(sf.FieldIndex))
 		if err != nil {
 			return err
 		}
@@ -111,13 +130,15 @@ func (l *LogLineParser) parse(parts []string, result interface{}) error {
 
 // structField 表示一个struct的字段属性
 type structField struct {
-	FieldIndex int
-	PartIndex  int
-	SubIndex   int
-	Kind       reflect.Kind
-	Type       reflect.Type
-	PtrType    reflect.Type
-	Anonymous  bool
+	FieldIndex  int
+	PartIndex   int
+	SubIndex    int
+	Kind        reflect.Kind
+	Type        reflect.Type
+	PtrType     reflect.Type
+	Anonymous   bool
+	Regexp      *regexp.Regexp
+	RegexpGroup int
 }
 
 func parseTwoInts(tag string, defaultValue int) (int, int) {
@@ -128,10 +149,10 @@ func parseTwoInts(tag string, defaultValue int) (int, int) {
 // nolint gochecknoglobals
 var unmarsherType = reflect.TypeOf((*Unmarshaler)(nil)).Elem()
 
-func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Value) error {
+func (l *LogLineParser) fillField(line string, parts []string, sf structField, f reflect.Value) error {
 	if sf.Kind == reflect.Struct && sf.Anonymous {
 		fv := reflect.New(f.Type()).Interface()
-		if err := l.parse(parts, fv); err != nil {
+		if err := l.parseParts(line, parts, fv); err != nil {
 			return err
 		}
 
@@ -140,12 +161,22 @@ func (l *LogLineParser) fillField(parts []string, sf structField, f reflect.Valu
 		return nil
 	}
 
-	part := parsePart(sf, parts)
-	if part == "" {
-		return nil
+	var sub string
+
+	if sf.Regexp != nil {
+		subs := sf.Regexp.FindStringSubmatch(line)
+		if sf.RegexpGroup < len(subs) {
+			sub = subs[sf.RegexpGroup]
+		}
+	} else {
+		part := parsePart(sf, parts)
+		if part == "" {
+			return nil
+		}
+
+		sub = l.parseSub(part, sf)
 	}
 
-	sub := l.parseSub(part, sf)
 	if sub == "" {
 		return nil
 	}
