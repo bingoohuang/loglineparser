@@ -15,8 +15,8 @@ var reg = regexp.MustCompile(`\d+\.\d+`)
 func ParseTime(s interface{}) time.Time {
 	if vt, ok := s.(string); ok {
 		if reg.MatchString(vt) {
-			sec, millis := parseTwoInts(vt, 0)
-			return time.Unix(int64(sec), int64(millis*1000000)) // nolint gomnd
+			sec, millis := parseTwoInts(vt)
+			return time.Unix(int64(*sec), int64(*millis*1000000)) // nolint gomnd
 		}
 	}
 

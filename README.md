@@ -14,7 +14,9 @@ log parser to parse log line to relative golang struct.
 2018/10/18 20:46:45 [notice] 19002#0: *53103423 [lua] gateway.lua:163: log_base(): [GatewayMonV2] [200], [200, 0.023999929428101, 1539866805.135, 108],  [true, -, -], [{}] request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1", host: "192.168.108.11:8081"
 ```
 
-1. 在形如以上日志行的日志中，以[xx]包含起来的，是需要提取的部分(parts)，索引号从0开始。 然后在xx中，可能有多个子字段(subs)，比如[200, 0.023999929428101, 1539866805.135, 108]，这个以逗号分隔的，是子字段(subs)。
+1. 在形如以上日志行的日志中，以[xx]包含起来的，是需要提取的部分(parts)。
+	- 索引号从0开始。
+	- 然后在xx中，可能有多个子字段(subs)，比如[200, 0.023999929428101, 1539866805.135, 108]，这个以逗号分隔的，是子字段(subs)。
 2. 或者使用正则表达式的捕获组提取字段值，见下面的示例
 
 可以定义以下go语言的结构体，来映射这些提取部分(parts)，或者提取子字段(subs):
@@ -28,7 +30,7 @@ import (
 )
 
 type LogLine struct {
-	LogLevel      string `llp:"0"`    // notice
+	LogLevel      string `llp:"0"` // 日志级别，提取第0+1个[]中整个部分
 	GatewayStatus string `llp:"2"` // GatewayMonV2
 
 	RespStatus            string    `llp:"4.0"`
@@ -36,12 +38,14 @@ type LogLine struct {
 	RespInnerStartReqTime time.Time `llp:"4.2"`
 	RespBodySize          int       `llp:"4.3"`
 
+	AuthIsLocalIP         bool   `llp:"5.0"`
+	AuthKeySecretCheckRst string `llp:"5.1"`
 
-	AuthIsLocalIP          bool   `llp:"5.0"`
-	AuthKeySecretCheckRst  string `llp:"5.1"`
-	
 	ApiSessionVarMap map[string]string `llp:"6"`
 
+	AppID      string `llp:"10.-3"` // 应用 ID，提取第10+1个[]中的倒数第3项
+	CustomerID string `llp:"10.-2"` // 客户 ID，提取第10+1个[]中的倒数第2项
+	DeviceID   string `llp:"10.-1"` // 设备 ID，提取第10+1个[]中的倒数第1项
 
 	// 例如：捕获 request: "POST /dsvs/v1/pkcs1/verifyDigestSign HTTP/1.1" 中的 POST 部分
 	Method string `llp:"reg" reg:"request: \"([A-Z]+)"` // 使用正则表达式捕获，默认捕获组 1
@@ -49,24 +53,24 @@ type LogLine struct {
 	Host string `llp:"reg" reg:"host: \"(.*?)\"" group:"1"` // 使用正则表达式捕获，捕获组序号 1
 }
 
-
 var logLineParser, _ = loglineparser.New(&LogLine{})
 
 // ParseLogLine 解析一行日志
 func ParseLogLine(line string) (*LogLine, error) {
 	v, err := logLineParser.Parse(line)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
 	return v.(*LogLine), nil
 }
+
 ```
 
 其中，结构体LogLine各个字段tag中的`llp`（loglineparser的缩写）部分，使用以下表达方式：
 
 1. x 表示取第x个（从0开始）提取值，并且根据需要，进行合适的类型转换。
-1. x.y 表示取第x个（从0开始）提取值的第y个（从0开始）子值，进行合适的类型转换。
+2. x.y 表示取第x个（从0开始）提取值的第y个（从0开始）子值，进行合适的类型转换。
 
 如果需要实现自定义解码，可以参考以下示例：
 
@@ -122,7 +126,7 @@ func TestCustomDecode(t *testing.T) {
 ## 运行测试
 
 1. 运行测试用例 `go fmt ./...; go test ./... -v -count=1`
-1. 运行基准用例 `go test -bench=.`
+2. 运行基准用例 `go test -bench=.`
 
 ```bash
 $ go test ./...

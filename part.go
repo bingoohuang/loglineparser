@@ -20,7 +20,7 @@ func NewBracketPartSplitter(emptyPlaceholder string) PartSplitter {
 	return &bracketPartSplitter{emptyPlaceholder: emptyPlaceholder}
 }
 
-// LoadLine 初始化
+// Parse 解析
 func (b bracketPartSplitter) Parse(s string) []string {
 	gr := uniseg.NewGraphemes(s)
 	reserved := ""
@@ -43,7 +43,6 @@ func (b bracketPartSplitter) Parse(s string) []string {
 	return parts
 }
 
-// nolint gocognit
 // next 返回（reserved, part, ok)
 func (b bracketPartSplitter) next(gr *uniseg.Graphemes, reserved string) (string, string, bool) {
 	last := ""

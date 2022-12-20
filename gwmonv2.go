@@ -118,12 +118,12 @@ func FastCreateGatewayMonV2(line string) GatewayMonV2 {
 		RespResponseTime:      ParseFloat32(subs5[1], -1),
 		RespInnerResponseTime: ParseFloat32(subs5[2], -1),
 		RespInnerStartReqTime: ParseTime(subs5[3]),
-		RespBodySize:          ParseInt(subs5[4], -1),
+		RespBodySize:          *ParseInt(subs5[4]),
 
 		UserTime:     ParseTime(subs6[0]),
 		UserClientIP: subs6[1],
 		UserUID:      subs6[2],
-		RequestSize:  ParseInt(subs6[3], -1),
+		RequestSize:  *ParseInt(subs6[3]),
 
 		RequestID: subs7[0],
 		TraceID:   subs7[1],

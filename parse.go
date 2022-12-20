@@ -108,7 +108,7 @@ func createStructField(fieldIndex int, f reflect.StructField) interface{} {
 		sf.Regexp = regexp.MustCompile(regTag)
 		sf.RegexpGroup = group
 	} else {
-		sf.PartIndex, sf.SubIndex = parseTwoInts(tag, -1)
+		sf.PartIndex, sf.SubIndex = parseTwoInts(tag)
 	}
 
 	return sf
@@ -131,8 +131,8 @@ func (l *LogLineParser) parseParts(line string, parts []string, result interface
 // structField 表示一个struct的字段属性
 type structField struct {
 	FieldIndex  int
-	PartIndex   int
-	SubIndex    int
+	PartIndex   *int
+	SubIndex    *int
 	Kind        reflect.Kind
 	Type        reflect.Type
 	PtrType     reflect.Type
@@ -141,9 +141,9 @@ type structField struct {
 	RegexpGroup int
 }
 
-func parseTwoInts(tag string, defaultValue int) (int, int) {
+func parseTwoInts(tag string) (*int, *int) {
 	s0, s1 := Split2(tag, ".")
-	return ParseInt(s0, defaultValue), ParseInt(s1, defaultValue)
+	return ParseInt(s0), ParseInt(s1)
 }
 
 // nolint gochecknoglobals
@@ -217,26 +217,31 @@ func (l *LogLineParser) fillField(line string, parts []string, sf structField, f
 }
 
 func (l *LogLineParser) parseSub(part string, sf structField) string {
-	if sf.SubIndex < 0 {
+	if sf.SubIndex == nil {
 		return part
 	}
 
 	subs := l.SubSplitter.Parse(part)
-	if sf.SubIndex < len(subs) {
-		return subs[sf.SubIndex]
+	subIdx := *sf.SubIndex
+	if subIdx < 0 {
+		subIdx += len(subs)
+	}
+
+	if subIdx < len(subs) {
+		return subs[subIdx]
 	}
 
 	return ""
 }
 
 func parsePart(sf structField, parts []string) string {
-	if sf.PartIndex < 0 {
+	if sf.PartIndex == nil {
 		return ""
 	}
 
 	part := ""
-	if sf.PartIndex < len(parts) {
-		part = parts[sf.PartIndex]
+	if *sf.PartIndex < len(parts) {
+		part = parts[*sf.PartIndex]
 	}
 
 	return part

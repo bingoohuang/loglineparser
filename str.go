@@ -10,14 +10,19 @@ import (
 )
 
 // IsBlank checks if a string is whitespace or empty (""). Observe the following behavior:
-//    IsBlank("")        = true
-//    IsBlank(" ")       = true
-//    IsBlank("bob")     = false
-//    IsBlank("  bob  ") = false
+//
+//	IsBlank("")        = true
+//	IsBlank(" ")       = true
+//	IsBlank("bob")     = false
+//	IsBlank("  bob  ") = false
+//
 // Parameter:
-//    str - the string to check
+//
+//	str - the string to check
+//
 // Returns:
-//    true - if the string is whitespace or empty ("")
+//
+//	true - if the string is whitespace or empty ("")
 func IsBlank(str string) bool {
 	if str == "" {
 		return true
@@ -25,17 +30,6 @@ func IsBlank(str string) bool {
 
 	for _, s := range str {
 		if !unicode.IsSpace(s) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// IsNumeric tells if the string contains only digits(0-9).
-func IsNumeric(s string) bool {
-	for _, r := range s {
-		if !(r >= '0' && r <= '9') {
 			return false
 		}
 	}
@@ -90,18 +84,18 @@ func Split2(s, sep string) (s0, s1 string) {
 	return s0, s1
 }
 
-// ParseInt parse s as int or return defaultValue
-func ParseInt(s string, defaultValue int) int {
+// ParseInt parse s as int.
+func ParseInt(s string) *int {
 	if s == "" {
-		return defaultValue
+		return nil
 	}
 
 	i, err := strconv.Atoi(s)
 	if err == nil {
-		return i
+		return &i
 	}
 
-	return defaultValue
+	return nil
 }
 
 // ParseFloat32 parse s as float or return defaultValue.
